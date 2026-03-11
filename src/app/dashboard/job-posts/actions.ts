@@ -71,7 +71,8 @@ export async function scanJobs(): Promise<{ count: number; error?: string }> {
             num: '10',
           })
           if (loc) params.set('location', loc)
-          const res = await fetch(`https://serpapi.com/search?${params}`, { cache: 'no-store' })
+          const serpBase = process.env.SERP_API_URL || 'https://serpapi.com'
+          const res = await fetch(`${serpBase}/search?${params}`, { cache: 'no-store' })
           data = await res.json()
           if (!data.error && data.jobs_results?.length) break
         }
