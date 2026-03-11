@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Linkedin, Mail, Trophy } from 'lucide-react'
 import { GenerateLeadsButton, StatusSelect } from './hit-list-controls'
+import { GenerateDraftButton } from '../email-drafts/draft-controls'
 
 
 function ScoreBadge({ score }: { score: number }) {
@@ -146,18 +147,21 @@ export default async function HitListPage() {
                     <td className="px-4 py-3">
                       <StatusSelect leadId={lead.id} current={lead.status} />
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      {contact?.linkedin_url ? (
-                        <a
-                          href={contact.linkedin_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-zinc-400 hover:text-blue-600 transition-colors"
-                          title="LinkedIn"
-                        >
-                          <Linkedin className="h-4 w-4" />
-                        </a>
-                      ) : null}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-end gap-2">
+                        <GenerateDraftButton leadId={lead.id} />
+                        {contact?.linkedin_url ? (
+                          <a
+                            href={contact.linkedin_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-zinc-400 hover:text-blue-600 transition-colors"
+                            title="LinkedIn"
+                          >
+                            <Linkedin className="h-4 w-4" />
+                          </a>
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 )
