@@ -41,8 +41,8 @@ export async function scanJobs(): Promise<{ count: number; error?: string }> {
   if (!user) return { count: 0, error: 'Not authenticated' }
 
   const apiKey = process.env.SERP_API_KEY
-  if (!apiKey || apiKey === 'your_serpapi_key') {
-    return { count: 0, error: 'SerpAPI key not configured. Add SERP_API_KEY to .env.local' }
+  if (!apiKey || apiKey === 'your_serpapi_key' || apiKey === 'local') {
+    return { count: 0, error: 'Job scanning is coming soon. A custom scanner for Netherlands job boards is in development.' }
   }
 
   const { data: profile } = await supabase
