@@ -23,8 +23,8 @@ export default async function SettingsPage() {
         defaultValues={{
           full_name: profile?.full_name ?? '',
           agency_name: profile?.agency_name ?? '',
-          scan_keywords: profile?.scan_keywords?.join('\n') ?? 'software engineer',
-          scan_locations: profile?.scan_locations?.join('\n') ?? '',
+          scan_keywords: profile?.scan_keywords ?? [],
+          scan_locations: profile?.scan_locations ?? [],
         }}
       />
     </div>

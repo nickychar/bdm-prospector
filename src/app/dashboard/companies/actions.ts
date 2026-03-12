@@ -127,7 +127,7 @@ export async function enrichCompany(
           title: person.position,
           seniority: person.seniority,
           linkedin_url: person.linkedin,
-          source: 'apollo' as const,
+          source: 'hunter' as const,
           enriched_at: new Date().toISOString(),
         },
         { onConflict: 'email', ignoreDuplicates: false }

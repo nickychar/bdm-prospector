@@ -63,7 +63,9 @@ export async function generateDraft(
 
   const groq = new Groq({ apiKey })
 
-  const completion = await groq.chat.completions.create({
+  let completion
+  try {
+    completion = await groq.chat.completions.create({
     model: 'llama-3.3-70b-versatile',
     max_tokens: 512,
     messages: [
@@ -88,7 +90,11 @@ Return ONLY a JSON object with exactly two fields:
 }`,
       },
     ],
-  })
+    })
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : 'Unknown error'
+    return { success: false, error: `AI service error: ${msg}` }
+  }
 
   const rawText = completion.choices[0]?.message?.content ?? ''
 

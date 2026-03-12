@@ -51,8 +51,8 @@ export async function scanJobs(): Promise<{ count: number; error?: string }> {
     .eq('id', user.id)
     .single()
 
-  const keywords = profile?.scan_keywords?.slice(0, 3) ?? ['software engineer']
-  const locations = (profile?.scan_locations?.length ? profile.scan_locations.slice(0, 2) : [''])
+  const keywords = profile?.scan_keywords?.slice(0, 5) ?? ['software engineer']
+  const locations = profile?.scan_locations?.length ? profile.scan_locations : ['']
 
   let totalSaved = 0
 
