@@ -94,11 +94,8 @@ export async function enrichCompany(
   }
 
   if (!domain) {
-    console.log(`[enrich] No domain for ${company.name} — skipping`)
     return { count: 0 }
   }
-
-  console.log(`[enrich] ${company.name} → domain: ${domain}`)
 
   try {
     const url = new URL('https://api.hunter.io/v2/domain-search')
@@ -110,14 +107,11 @@ export async function enrichCompany(
     const data: HunterResponse = await res.json()
 
     if (data.errors?.length) {
-      console.log(`[enrich] Hunter error for ${domain}:`, data.errors[0].details)
       return { count: 0, error: data.errors[0].details }
     }
 
     const emails = data.data?.emails ?? []
-    console.log(`[enrich] ${domain} → ${emails.length} emails, positions: ${emails.map(e => e.position).join(' | ')}`)
     const hrContacts = emails.filter((e) => isHRContact(e.position))
-    console.log(`[enrich] ${domain} → ${hrContacts.length} HR contacts`)
 
     if (!hrContacts.length) return { count: 0 }
 
@@ -138,7 +132,6 @@ export async function enrichCompany(
         },
         { onConflict: 'email', ignoreDuplicates: false }
       )
-      console.log(`[enrich] upsert ${person.value}: ${error ? error.message : 'ok'}`)
       if (!error) saved++
     }
 
@@ -146,7 +139,6 @@ export async function enrichCompany(
     revalidatePath('/dashboard/contacts')
     return { count: saved }
   } catch (e) {
-    console.error('Hunter enrichment failed:', e)
     return { count: 0, error: 'Network error calling Hunter.io API' }
   }
 }

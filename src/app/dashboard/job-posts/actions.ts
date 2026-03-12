@@ -153,7 +153,7 @@ export async function scanJobs(): Promise<{ count: number; error?: string }> {
           }
         }
       } catch (e) {
-        console.error(`SerpAPI scan failed for "${keyword}" / "${location}":`, e)
+        void e
       }
     }
   }
