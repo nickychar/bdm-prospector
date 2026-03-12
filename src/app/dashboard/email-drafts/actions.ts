@@ -1,6 +1,6 @@
 'use server'
 
-import Anthropic from '@anthropic-ai/sdk'
+import Groq from 'groq-sdk'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
@@ -13,9 +13,9 @@ export async function generateDraft(
   } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey || apiKey === 'your_anthropic_api_key') {
-    return { success: false, error: 'Anthropic API key not configured. Add ANTHROPIC_API_KEY to .env.local' }
+  const apiKey = process.env.GROQ_API_KEY
+  if (!apiKey) {
+    return { success: false, error: 'Groq API key not configured. Add GROQ_API_KEY to .env.local' }
   }
 
   // Fetch lead with contact, company, and their job posts
@@ -61,17 +61,20 @@ export async function generateDraft(
   const bdmName = profile?.full_name ?? 'Your BDM'
   const agencyName = profile?.agency_name ?? 'our agency'
 
-  const anthropic = new Anthropic({ apiKey })
+  const groq = new Groq({ apiKey })
 
-  const stream = anthropic.messages.stream({
-    model: 'claude-opus-4-6',
+  const completion = await groq.chat.completions.create({
+    model: 'llama-3.3-70b-versatile',
     max_tokens: 512,
-    thinking: { type: 'adaptive' },
-    system: `You are a recruitment agency BDM writing cold outreach emails to HR and talent acquisition professionals.
+    messages: [
+      {
+        role: 'system',
+        content: `You are a recruitment agency BDM writing cold outreach emails to HR and talent acquisition professionals.
 Write concise, professional, personalised emails under 130 words.
 Focus on the value you bring: faster hiring, pre-vetted candidates, specialised networks.
-Never be salesy or generic. Reference specific details about their hiring.`,
-    messages: [
+Never be salesy or generic. Reference specific details about their hiring.
+Always respond with ONLY a valid JSON object, no markdown, no explanation.`,
+      },
       {
         role: 'user',
         content: `Write a cold outreach email from ${bdmName} at ${agencyName} to ${contactName}, who is ${contact.title ?? 'an HR professional'} at ${company.name} (${company.location ?? 'unknown location'}).
@@ -87,18 +90,9 @@ Return ONLY a JSON object with exactly two fields:
     ],
   })
 
-  const message = await stream.finalMessage()
+  const rawText = completion.choices[0]?.message?.content ?? ''
 
-  // Extract text from response (skip thinking blocks)
-  let rawText = ''
-  for (const block of message.content) {
-    if (block.type === 'text') {
-      rawText = block.text
-      break
-    }
-  }
-
-  // Parse JSON from Claude's response
+  // Parse JSON from response
   let subject = ''
   let body = ''
   try {
@@ -108,11 +102,11 @@ Return ONLY a JSON object with exactly two fields:
     subject = parsed.subject ?? ''
     body = parsed.body ?? ''
   } catch {
-    return { success: false, error: 'Failed to parse email from Claude response' }
+    return { success: false, error: 'Failed to parse email from AI response' }
   }
 
   if (!subject || !body) {
-    return { success: false, error: 'Claude returned an incomplete email' }
+    return { success: false, error: 'AI returned an incomplete email' }
   }
 
   // Save to email_drafts
@@ -121,7 +115,7 @@ Return ONLY a JSON object with exactly two fields:
     lead_id: leadId,
     subject,
     body,
-    template_used: 'claude-opus-4-6',
+    template_used: 'llama-3.3-70b',
     status: 'draft',
   })
 

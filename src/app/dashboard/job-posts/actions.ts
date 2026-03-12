@@ -41,8 +41,8 @@ export async function scanJobs(): Promise<{ count: number; error?: string }> {
   if (!user) return { count: 0, error: 'Not authenticated' }
 
   const apiKey = process.env.SERP_API_KEY
-  if (!apiKey || apiKey === 'your_serpapi_key' || apiKey === 'local') {
-    return { count: 0, error: 'Job scanning is coming soon. A custom scanner for Netherlands job boards is in development.' }
+  if (!apiKey) {
+    return { count: 0, error: 'SERP_API_KEY not configured.' }
   }
 
   const { data: profile } = await supabase
@@ -107,23 +107,50 @@ export async function scanJobs(): Promise<{ count: number; error?: string }> {
 
           const url = job.related_links?.[0]?.link ?? null
 
-          const { error } = await supabase
-            .from('job_posts')
-            .upsert(
-              {
-                user_id: user.id,
-                company_id: companyId,
-                title: job.title,
-                description: job.description?.slice(0, 2000) ?? null,
-                url,
-                location: job.location,
-                source: 'serpapi',
-                posted_date: parsePostedDate(job.detected_extensions?.posted_at),
-              },
-              { onConflict: 'user_id,url', ignoreDuplicates: true }
-            )
+          // Deduplicate by URL when present, otherwise by title + company
+          if (url) {
+            const { error } = await supabase
+              .from('job_posts')
+              .upsert(
+                {
+                  user_id: user.id,
+                  company_id: companyId,
+                  title: job.title,
+                  description: job.description?.slice(0, 2000) ?? null,
+                  url,
+                  location: job.location,
+                  source: 'serpapi',
+                  posted_date: parsePostedDate(job.detected_extensions?.posted_at),
+                },
+                { onConflict: 'user_id,url', ignoreDuplicates: true }
+              )
+            if (!error) totalSaved++
+          } else {
+            // No URL — check for existing by title + company to avoid duplicates
+            const { data: existingJob } = await supabase
+              .from('job_posts')
+              .select('id')
+              .eq('user_id', user.id)
+              .eq('company_id', companyId ?? '')
+              .ilike('title', job.title)
+              .single()
 
-          if (!error) totalSaved++
+            if (!existingJob) {
+              const { error } = await supabase
+                .from('job_posts')
+                .insert({
+                  user_id: user.id,
+                  company_id: companyId,
+                  title: job.title,
+                  description: job.description?.slice(0, 2000) ?? null,
+                  url: null,
+                  location: job.location,
+                  source: 'serpapi',
+                  posted_date: parsePostedDate(job.detected_extensions?.posted_at),
+                })
+              if (!error) totalSaved++
+            }
+          }
         }
       } catch (e) {
         console.error(`SerpAPI scan failed for "${keyword}" / "${location}":`, e)

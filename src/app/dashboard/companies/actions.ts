@@ -47,6 +47,19 @@ function extractDomain(company: { domain: string | null; website: string | null 
   return null
 }
 
+async function resolveDomainByName(companyName: string): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `https://autocomplete.clearbit.com/v1/companies/suggest?query=${encodeURIComponent(companyName)}`,
+      { signal: AbortSignal.timeout(5000) }
+    )
+    const results: { name: string; domain: string }[] = await res.json()
+    return results?.[0]?.domain ?? null
+  } catch {
+    return null
+  }
+}
+
 export async function enrichCompany(
   companyId: string
 ): Promise<{ count: number; error?: string }> {
@@ -70,10 +83,22 @@ export async function enrichCompany(
 
   if (!company) return { count: 0, error: 'Company not found' }
 
-  const domain = extractDomain(company)
+  let domain = extractDomain(company)
+
+  // If no domain stored, resolve via Clearbit autocomplete
   if (!domain) {
-    return { count: 0, error: `No domain found for ${company.name}. Add a website URL to enrich this company.` }
+    domain = await resolveDomainByName(company.name)
+    if (domain) {
+      await supabase.from('companies').update({ domain }).eq('id', companyId)
+    }
   }
+
+  if (!domain) {
+    console.log(`[enrich] No domain for ${company.name} — skipping`)
+    return { count: 0 }
+  }
+
+  console.log(`[enrich] ${company.name} → domain: ${domain}`)
 
   try {
     const url = new URL('https://api.hunter.io/v2/domain-search')
@@ -85,11 +110,14 @@ export async function enrichCompany(
     const data: HunterResponse = await res.json()
 
     if (data.errors?.length) {
+      console.log(`[enrich] Hunter error for ${domain}:`, data.errors[0].details)
       return { count: 0, error: data.errors[0].details }
     }
 
     const emails = data.data?.emails ?? []
+    console.log(`[enrich] ${domain} → ${emails.length} emails, positions: ${emails.map(e => e.position).join(' | ')}`)
     const hrContacts = emails.filter((e) => isHRContact(e.position))
+    console.log(`[enrich] ${domain} → ${hrContacts.length} HR contacts`)
 
     if (!hrContacts.length) return { count: 0 }
 
@@ -105,20 +133,13 @@ export async function enrichCompany(
           title: person.position,
           seniority: person.seniority,
           linkedin_url: person.linkedin,
-          source: 'apollo' as const, // reusing existing enum value
+          source: 'apollo' as const,
           enriched_at: new Date().toISOString(),
         },
         { onConflict: 'email', ignoreDuplicates: false }
       )
+      console.log(`[enrich] upsert ${person.value}: ${error ? error.message : 'ok'}`)
       if (!error) saved++
-    }
-
-    // Update company domain if we didn't have it
-    if (!company.domain && data.data?.domain) {
-      await supabase
-        .from('companies')
-        .update({ domain: data.data.domain })
-        .eq('id', companyId)
     }
 
     revalidatePath('/dashboard/companies')
@@ -147,7 +168,6 @@ export async function enrichAllCompanies(): Promise<{ count: number; error?: str
   let total = 0
   for (const company of companies) {
     const result = await enrichCompany(company.id)
-    if (result.error) return { count: total, error: result.error }
     total += result.count
   }
 
