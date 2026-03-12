@@ -127,7 +127,8 @@ export async function enrichCompany(
           title: person.position,
           seniority: person.seniority,
           linkedin_url: person.linkedin,
-          source: 'hunter' as const,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          source: 'hunter' as any,
           enriched_at: new Date().toISOString(),
         },
         { onConflict: 'email', ignoreDuplicates: false }
