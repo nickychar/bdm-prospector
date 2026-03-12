@@ -5,6 +5,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -35,28 +36,34 @@ export async function Header({ title }: { title?: string }) {
             </Avatar>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium">{displayName}</span>
-                <span className="text-xs font-normal text-muted-foreground">
-                  {user?.email}
-                </span>
-              </div>
-            </DropdownMenuLabel>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-sm font-medium">{displayName}</span>
+                  <span className="text-xs font-normal text-muted-foreground">
+                    {user?.email}
+                  </span>
+                </div>
+              </DropdownMenuLabel>
+            </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem render={<Link href="/dashboard/settings" />}>
-              <User className="mr-2 h-4 w-4" />
-              Account settings
-            </DropdownMenuItem>
+            <DropdownMenuGroup>
+              <DropdownMenuItem render={<Link href="/dashboard/settings" />}>
+                <User className="mr-2 h-4 w-4" />
+                Account settings
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600 focus:text-red-600">
-              <form action={logout} className="flex w-full items-center">
-                <button type="submit" className="flex w-full items-center gap-2">
-                  <LogOut className="h-4 w-4" />
-                  Sign out
-                </button>
-              </form>
-            </DropdownMenuItem>
+            <DropdownMenuGroup>
+              <DropdownMenuItem className="text-red-600 focus:text-red-600">
+                <form action={logout} className="flex w-full items-center">
+                  <button type="submit" className="flex w-full items-center gap-2">
+                    <LogOut className="h-4 w-4" />
+                    Sign out
+                  </button>
+                </form>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -3,39 +3,49 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-interface ApolloOrganization {
-  name: string
-  website_url: string | null
-}
-
-interface ApolloPerson {
-  id: string
+interface HunterEmail {
+  value: string
   first_name: string | null
   last_name: string | null
-  name: string
-  title: string | null
-  email: string | null
-  linkedin_url: string | null
-  organization: ApolloOrganization | null
+  position: string | null
+  seniority: string | null
+  linkedin: string | null
+  confidence: number
 }
 
-interface ApolloResponse {
-  people: ApolloPerson[]
-  error?: string
-  message?: string
+interface HunterResponse {
+  data?: {
+    emails: HunterEmail[]
+    domain: string
+  }
+  errors?: { details: string }[]
 }
 
-const HR_TITLES = [
-  'HR Manager',
-  'Head of HR',
-  'HR Director',
-  'Talent Acquisition',
-  'Recruitment Manager',
-  'Head of Talent',
-  'People & Culture',
-  'VP People',
-  'Chief People Officer',
+const HR_KEYWORDS = [
+  'hr', 'human resources', 'talent', 'recruitment', 'recruiter',
+  'people', 'culture', 'workforce', 'hiring', 'personnel',
 ]
+
+function isHRContact(position: string | null): boolean {
+  if (!position) return false
+  const lower = position.toLowerCase()
+  return HR_KEYWORDS.some((kw) => lower.includes(kw))
+}
+
+function extractDomain(company: { domain: string | null; website: string | null }): string | null {
+  if (company.domain) return company.domain
+  if (company.website) {
+    try {
+      const url = new URL(
+        company.website.startsWith('http') ? company.website : `https://${company.website}`
+      )
+      return url.hostname.replace(/^www\./, '')
+    } catch {
+      return null
+    }
+  }
+  return null
+}
 
 export async function enrichCompany(
   companyId: string
@@ -46,69 +56,77 @@ export async function enrichCompany(
   } = await supabase.auth.getUser()
   if (!user) return { count: 0, error: 'Not authenticated' }
 
-  const apiKey = process.env.APOLLO_API_KEY
-  if (!apiKey || apiKey === 'your_apollo_api_key') {
-    return { count: 0, error: 'Apollo API key not configured. Add APOLLO_API_KEY to .env.local' }
+  const apiKey = process.env.HUNTER_API_KEY
+  if (!apiKey) {
+    return { count: 0, error: 'Hunter.io API key not configured. Add HUNTER_API_KEY to environment variables.' }
   }
 
   const { data: company } = await supabase
     .from('companies')
-    .select('id, name')
+    .select('id, name, domain, website')
     .eq('id', companyId)
     .eq('user_id', user.id)
     .single()
 
   if (!company) return { count: 0, error: 'Company not found' }
 
+  const domain = extractDomain(company)
+  if (!domain) {
+    return { count: 0, error: `No domain found for ${company.name}. Add a website URL to enrich this company.` }
+  }
+
   try {
-    const res = await fetch('https://api.apollo.io/api/v1/mixed_people/api_search', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Api-Key': apiKey,
-      },
-      body: JSON.stringify({
-        organization_names: [company.name],
-        person_titles: HR_TITLES,
-        per_page: 10,
-        page: 1,
-      }),
-    })
+    const url = new URL('https://api.hunter.io/v2/domain-search')
+    url.searchParams.set('domain', domain)
+    url.searchParams.set('api_key', apiKey)
+    url.searchParams.set('limit', '10')
 
-    const data: ApolloResponse = await res.json()
+    const res = await fetch(url.toString())
+    const data: HunterResponse = await res.json()
 
-    if (data.error || data.message) {
-      return { count: 0, error: data.error ?? data.message }
+    if (data.errors?.length) {
+      return { count: 0, error: data.errors[0].details }
     }
 
-    if (!data.people?.length) return { count: 0 }
+    const emails = data.data?.emails ?? []
+    const hrContacts = emails.filter((e) => isHRContact(e.position))
+
+    if (!hrContacts.length) return { count: 0 }
 
     let saved = 0
-    for (const person of data.people) {
+    for (const person of hrContacts) {
       const { error } = await supabase.from('contacts').upsert(
         {
           user_id: user.id,
           company_id: companyId,
           first_name: person.first_name,
           last_name: person.last_name,
-          email: person.email,
-          title: person.title,
-          linkedin_url: person.linkedin_url,
-          apollo_id: person.id,
-          source: 'apollo' as const,
+          email: person.value,
+          title: person.position,
+          seniority: person.seniority,
+          linkedin_url: person.linkedin,
+          source: 'apollo' as const, // reusing existing enum value
           enriched_at: new Date().toISOString(),
         },
-        { onConflict: 'apollo_id', ignoreDuplicates: false }
+        { onConflict: 'email', ignoreDuplicates: false }
       )
       if (!error) saved++
+    }
+
+    // Update company domain if we didn't have it
+    if (!company.domain && data.data?.domain) {
+      await supabase
+        .from('companies')
+        .update({ domain: data.data.domain })
+        .eq('id', companyId)
     }
 
     revalidatePath('/dashboard/companies')
     revalidatePath('/dashboard/contacts')
     return { count: saved }
   } catch (e) {
-    console.error('Apollo enrichment failed:', e)
-    return { count: 0, error: 'Network error calling Apollo API' }
+    console.error('Hunter enrichment failed:', e)
+    return { count: 0, error: 'Network error calling Hunter.io API' }
   }
 }
 
@@ -119,7 +137,6 @@ export async function enrichAllCompanies(): Promise<{ count: number; error?: str
   } = await supabase.auth.getUser()
   if (!user) return { count: 0, error: 'Not authenticated' }
 
-  // Get companies that have no contacts yet
   const { data: companies } = await supabase
     .from('companies')
     .select('id')
