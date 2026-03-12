@@ -137,7 +137,7 @@ export interface Database {
           linkedin_url: string | null
           salesforce_contact_id: string | null
           apollo_id: string | null
-          source: 'salesforce' | 'apollo' | 'manual'
+          source: 'salesforce' | 'apollo' | 'hunter' | 'manual'
           enriched_at: string | null
           created_at: string
           updated_at: string
@@ -155,7 +155,7 @@ export interface Database {
           linkedin_url?: string | null
           salesforce_contact_id?: string | null
           apollo_id?: string | null
-          source: 'salesforce' | 'apollo' | 'manual'
+          source: 'salesforce' | 'apollo' | 'hunter' | 'manual'
           enriched_at?: string | null
           created_at?: string
           updated_at?: string
