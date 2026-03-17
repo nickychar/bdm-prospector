@@ -1,1 +1,4 @@
 .worktrees/
+web/.env.local
+web/.env*.local
+scraper/.env
