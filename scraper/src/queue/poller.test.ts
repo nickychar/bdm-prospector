@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('../db/client.js', () => ({ db: { rpc: vi.fn(), from: vi.fn() } }))
 
-import { claimNextJob, completeJob, failJob, heartbeat } from './poller.js'
+import { claimNextJob, completeJob, failJob, heartbeat, pollOnce } from './poller.js'
 import { db } from '../db/client.js'
 
 const mockJob = { id: 'job-1', query: 'interim finance', filters: {}, status: 'running',
@@ -60,5 +60,50 @@ describe('heartbeat', () => {
     await heartbeat('job-1')
     expect(fromMock.update).toHaveBeenCalledWith(expect.objectContaining({ updated_at: expect.any(String) }))
     expect(updateMock.eq).toHaveBeenCalledWith('id', 'job-1')
+  })
+})
+
+describe('pollOnce', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('calls handler and completeJob when a job is available', async () => {
+    vi.mocked(db.rpc).mockResolvedValue({ data: [mockJob], error: null } as any)
+    const updateMock = { eq: vi.fn().mockResolvedValue({ error: null }) }
+    const fromMock = { update: vi.fn().mockReturnValue(updateMock) }
+    vi.mocked(db.from).mockReturnValue(fromMock as any)
+
+    const handler = vi.fn().mockResolvedValue(5)
+    const result = await pollOnce(handler)
+
+    expect(handler).toHaveBeenCalledWith(mockJob)
+    expect(fromMock.update).toHaveBeenCalledWith(expect.objectContaining({ status: 'done', result_count: 5 }))
+    expect(result).toBe(true)
+  })
+
+  it('calls failJob when handler throws', async () => {
+    vi.mocked(db.rpc).mockResolvedValue({ data: [mockJob], error: null } as any)
+    const updateMock = { eq: vi.fn().mockResolvedValue({ error: null }) }
+    const fromMock = { update: vi.fn().mockReturnValue(updateMock) }
+    vi.mocked(db.from).mockReturnValue(fromMock as any)
+
+    const handler = vi.fn().mockRejectedValue(new Error('scrape failed'))
+    const result = await pollOnce(handler)
+
+    expect(handler).toHaveBeenCalledWith(mockJob)
+    expect(fromMock.update).toHaveBeenCalledWith(expect.objectContaining({ status: 'failed', error: 'scrape failed' }))
+    expect(result).toBe(false)
+  })
+
+  it('does not call completeJob or failJob when no job is available', async () => {
+    vi.mocked(db.rpc).mockResolvedValue({ data: [], error: null } as any)
+    const fromMock = { update: vi.fn() }
+    vi.mocked(db.from).mockReturnValue(fromMock as any)
+
+    const handler = vi.fn()
+    const result = await pollOnce(handler)
+
+    expect(handler).not.toHaveBeenCalled()
+    expect(fromMock.update).not.toHaveBeenCalled()
+    expect(result).toBe(false)
   })
 })

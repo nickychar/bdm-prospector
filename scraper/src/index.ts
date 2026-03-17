@@ -20,29 +20,31 @@ async function handleScrapeJob(job: ScrapeJob): Promise<number> {
 
     const seniority = result.seniorityRaw ? normaliseSeniority(result.seniorityRaw) : null
 
-    const domain = result.companyDomain
-      ? normaliseDomain(result.companyDomain)
-      : normaliseDomain(result.companyName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') + '.invalid')
+    const domain = result.companyDomain ? normaliseDomain(result.companyDomain) : null
 
-    const companyId = await upsertCompany({
-      name: result.companyName,
-      domain,
-      country: job.filters.country === 'uk' ? 'uk' : job.filters.country === 'nl' ? 'nl' : null,
-    })
+    try {
+      const companyId = await upsertCompany({
+        name: result.companyName,
+        domain,
+        country: job.filters.country === 'uk' ? 'uk' : job.filters.country === 'nl' ? 'nl' : null,
+      })
 
-    await insertJobSignal({
-      companyId,
-      title: result.jobTitle,
-      seniority,
-      contractType: (contractType === 'permanent' || contractType === null) ? null : contractType,
-      board: result.board,
-      postedDate: result.postedDate,
-      snippet: result.snippet,
-      boardsCount: result.boardsCount,
-      scrapeJobId: job.id,
-    })
+      await insertJobSignal({
+        companyId,
+        title: result.jobTitle,
+        seniority,
+        contractType,
+        board: result.board,
+        postedDate: result.postedDate,
+        snippet: result.snippet,
+        boardsCount: result.boardsCount,
+        scrapeJobId: job.id,
+      })
 
-    count++
+      count++
+    } catch (err) {
+      console.error(`[scraper] Failed to write result for "${result.companyName}": ${err instanceof Error ? err.message : String(err)}`)
+    }
   }
 
   console.log(`[scraper] Job ${job.id} done — ${count} signals written`)
