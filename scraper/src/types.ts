@@ -39,3 +39,8 @@ export interface RawJobResult {
   contractTypeRaw: string | null
   seniorityRaw: string | null
 }
+
+export interface DedupedJobResult extends RawJobResult {
+  boardsCount: number
+  boardsList: string[]
+}
