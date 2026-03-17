@@ -14,7 +14,10 @@ export function createClient() {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             )
-          } catch {} // ignore in RSC
+          } catch {
+            // setAll throws in RSC context (read-only cookies) — safe to ignore
+            // In Route Handlers and Server Actions, cookies() is writable so this won't throw
+          }
         },
       },
     }
