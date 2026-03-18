@@ -33,8 +33,8 @@ async function enrichContact(contact: FoundContact, domain: string): Promise<Enr
   return { ...contact, email, smtpVerified, confidence }
 }
 
-function hasEnough(contacts: EnrichedContact[]): boolean {
-  return deduplicateContacts(contacts).filter(c => c.confidence === 'high').length >= 3
+function hasEnough(dedupedContacts: EnrichedContact[]): boolean {
+  return dedupedContacts.filter(c => c.confidence === 'high').length >= 3
 }
 
 export async function runWaterfall(
@@ -43,11 +43,13 @@ export async function runWaterfall(
   country: string
 ): Promise<EnrichedContact[]> {
   const enriched: EnrichedContact[] = []
+  let dedupedContacts: EnrichedContact[] = []
 
   async function runStep(found: FoundContact[]): Promise<void> {
     for (const contact of found) {
       enriched.push(await enrichContact(contact, domain))
     }
+    dedupedContacts = deduplicateContacts(enriched)
   }
 
   // Step 1: Companies House (UK) or KvK (NL)
@@ -55,18 +57,18 @@ export async function runWaterfall(
     ? await findContactsViaKvK(companyName, country)
     : await findContactsViaCompaniesHouse(companyName, country)
   await runStep(step1)
-  if (hasEnough(enriched)) return capContacts(deduplicateContacts(enriched))
+  if (hasEnough(dedupedContacts)) return capContacts(dedupedContacts)
 
   // Step 2: Google LinkedIn search
   await runStep(await searchLinkedInContacts(companyName))
-  if (hasEnough(enriched)) return capContacts(deduplicateContacts(enriched))
+  if (hasEnough(dedupedContacts)) return capContacts(dedupedContacts)
 
   // Step 3: Company website
   await runStep(await findContactsOnWebsite(domain))
-  if (hasEnough(enriched)) return capContacts(deduplicateContacts(enriched))
+  if (hasEnough(dedupedContacts)) return capContacts(dedupedContacts)
 
   // Step 4: Press releases
   await runStep(await searchPressReleases(companyName))
 
-  return capContacts(deduplicateContacts(enriched))
+  return capContacts(dedupedContacts)
 }
