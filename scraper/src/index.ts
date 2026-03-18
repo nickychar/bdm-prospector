@@ -7,6 +7,7 @@ import { upsertCompany } from './db/companies.js'
 import { insertJobSignal } from './db/job-signals.js'
 import { upsertContact } from './db/contacts.js'
 import { runWaterfall } from './contacts/waterfall.js'
+import { upsertLead } from './scoring/upsert-lead.js'
 import { normaliseContractType, normaliseSeniority, isPermanent } from './normalise/nl-terms.js'
 import { normaliseDomain } from './normalise/domain.js'
 import type { ScrapeJob } from './types.js'
@@ -81,9 +82,10 @@ async function handleScrapeJob(job: ScrapeJob): Promise<number> {
         for (const contact of contacts) {
           await upsertContact(companyId, contact)
         }
+        await upsertLead(companyId)
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
-        console.warn(`[scraper] Waterfall failed for ${domain}: ${msg}`)
+        console.warn(`[scraper] Phase 2 failed for ${domain}: ${msg}`)
       }
     })
   )
