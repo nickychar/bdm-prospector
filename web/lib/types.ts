@@ -117,5 +117,32 @@ export interface LeadWithCompany extends Lead {
   company: Company
   contacts: Contact[]
   job_signals: JobSignal[]
-  pipeline_events?: PipelineEvent[]
 }
+
+export type ScoreBand = 'hot' | 'warm' | 'cold' | 'hidden'
+
+export function getScoreBand(score: number): ScoreBand {
+  if (score >= 70) return 'hot'
+  if (score >= 45) return 'warm'
+  if (score >= 20) return 'cold'
+  return 'hidden'
+}
+
+export const SCORE_BAND_LABELS: Record<ScoreBand, string> = {
+  hot: 'Hot',
+  warm: 'Warm',
+  cold: 'Cold',
+  hidden: 'Hidden',
+}
+
+export const SCORE_BAND_COLORS: Record<ScoreBand, string> = {
+  hot: 'bg-red-100 text-red-800',
+  warm: 'bg-yellow-100 text-yellow-800',
+  cold: 'bg-slate-100 text-slate-700',
+  hidden: 'bg-gray-100 text-gray-500',
+}
+
+// Stages shown in the Kanban board (Won and Dead are excluded from main board)
+export const KANBAN_STAGES: PipelineStage[] = [
+  'new', 'contacted', 'replied', 'meeting_booked', 'proposal_sent',
+]
