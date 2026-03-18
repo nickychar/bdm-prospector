@@ -78,16 +78,26 @@ export function PipelineView({ initialLeads }: PipelineViewProps) {
   }, [selectedLead?.id])
 
   // Optimistic stage move: update local state immediately then write to DB
-  function handleMoveStage(leadId: string, toStage: PipelineStage) {
+  async function handleMoveStage(leadId: string, toStage: PipelineStage) {
+    const previousLeads = leads
     setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage: toStage } : l))
     // Also update the selected lead panel if it's the one being moved
     setSelectedLead(prev => prev?.id === leadId ? { ...prev, stage: toStage } : prev)
-    startTransition(() => moveStage(leadId, toStage))
+    try {
+      await moveStage(leadId, toStage)
+    } catch {
+      setLeads(previousLeads)
+    }
   }
 
-  function handleArchive(leadId: string) {
-    startTransition(() => archiveLead(leadId))
+  async function handleArchive(leadId: string) {
+    const previousLeads = leads
     setLeads(prev => prev.filter(l => l.id !== leadId))
+    try {
+      await archiveLead(leadId)
+    } catch {
+      setLeads(previousLeads)
+    }
   }
 
   const filtered = filterLeads(leads, filters)
@@ -125,6 +135,7 @@ export function PipelineView({ initialLeads }: PipelineViewProps) {
         lead={selectedLead}
         pipelineEvents={pipelineEvents}
         onClose={() => setSelectedLead(null)}
+        onMoveStage={handleMoveStage}
         onArchive={(leadId) => { handleArchive(leadId); setSelectedLead(null) }}
       />
     </div>

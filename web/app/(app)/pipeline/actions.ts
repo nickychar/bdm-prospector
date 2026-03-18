@@ -5,6 +5,8 @@ import type { PipelineStage } from '@/lib/types'
 
 export async function moveStage(leadId: string, toStage: PipelineStage): Promise<void> {
   const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
 
   const { data: lead, error: fetchError } = await supabase
     .from('leads')
@@ -29,19 +31,26 @@ export async function moveStage(leadId: string, toStage: PipelineStage): Promise
 
 export async function addNote(leadId: string, note: string): Promise<void> {
   const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
   const { error } = await supabase
     .from('pipeline_events')
     .insert({ lead_id: leadId, note })
   if (error) throw new Error(error.message)
-  await supabase
+  const { error: updateError } = await supabase
     .from('leads')
     .update({ last_activity_at: new Date().toISOString() })
     .eq('id', leadId)
+  if (updateError) throw new Error(updateError.message)
   revalidatePath('/pipeline')
 }
 
 export async function archiveLead(leadId: string): Promise<void> {
   const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
   const { error } = await supabase
     .from('leads')
     .update({ is_suppressed: true, last_activity_at: new Date().toISOString() })

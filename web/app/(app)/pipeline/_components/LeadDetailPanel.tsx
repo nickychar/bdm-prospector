@@ -10,17 +10,18 @@ import {
 import { cn } from '@/lib/utils'
 import { computeScoreBreakdown } from '@/lib/score-breakdown'
 import { getScoreBand, PIPELINE_STAGES, STAGE_LABELS, SCORE_BAND_COLORS } from '@/lib/types'
-import { moveStage, addNote, archiveLead } from '../actions'
+import { addNote, archiveLead } from '../actions'
 import type { LeadWithCompany, PipelineStage, PipelineEvent } from '@/lib/types'
 
 interface LeadDetailPanelProps {
   lead: LeadWithCompany | null
   pipelineEvents: PipelineEvent[]
   onClose: () => void
+  onMoveStage?: (leadId: string, toStage: PipelineStage) => void
   onArchive?: (leadId: string) => void
 }
 
-export function LeadDetailPanel({ lead, pipelineEvents, onClose, onArchive }: LeadDetailPanelProps) {
+export function LeadDetailPanel({ lead, pipelineEvents, onClose, onMoveStage, onArchive }: LeadDetailPanelProps) {
   const [noteText, setNoteText] = useState('')
   const [revealedEmails, setRevealedEmails] = useState<Set<string>>(new Set())
   const [isPending, startTransition] = useTransition()
@@ -31,7 +32,9 @@ export function LeadDetailPanel({ lead, pipelineEvents, onClose, onArchive }: Le
   const breakdown = computeScoreBreakdown(lead)
 
   function handleMoveStage(toStage: PipelineStage) {
-    startTransition(() => moveStage(lead!.id, toStage))
+    if (onMoveStage) {
+      onMoveStage(lead!.id, toStage)
+    }
   }
 
   function handleAddNote() {
