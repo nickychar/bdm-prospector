@@ -5,6 +5,7 @@ import { scrape as scrapeIntermediair } from './intermediair.js'
 import { scrape as scrapeStepstone } from './stepstone-nl.js'
 import { scrape as scrapeJobbird } from './jobbird.js'
 import { scrape as scrapeFlexmarkt } from './flexmarkt.js'
+import { scrape as scrapeGoogleJobsNl } from './google-jobs-nl.js'
 import { deduplicateResults } from '../normalise/dedup.js'
 import type { DedupedJobResult, SearchFilters } from '../types.js'
 
@@ -16,6 +17,7 @@ const NL_SCRAPERS = [
   scrapeStepstone,
   scrapeJobbird,
   scrapeFlexmarkt,
+  scrapeGoogleJobsNl, // Broad coverage via SerpAPI Killer (Puppeteer stealth)
 ]
 
 export async function fanOut(query: string, filters: SearchFilters): Promise<DedupedJobResult[]> {
