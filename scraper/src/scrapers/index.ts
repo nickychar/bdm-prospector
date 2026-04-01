@@ -20,11 +20,30 @@ const NL_SCRAPERS = [
   scrapeGoogleJobsNl, // Broad coverage via SerpAPI Killer (Puppeteer stealth)
 ]
 
+// Fast Cheerio-only boards — no Puppeteer, safe for synchronous HTTP requests
+const SYNC_SCRAPERS = [
+  scrapeIndeedNl,
+  scrapeNVB,
+  scrapeMonsterboard,
+  scrapeIntermediair,
+  scrapeStepstone,
+  scrapeJobbird,
+  scrapeFlexmarkt,
+]
+
 export async function fanOut(query: string, filters: SearchFilters): Promise<DedupedJobResult[]> {
   const settled = await Promise.allSettled(NL_SCRAPERS.map(fn => fn(query, filters)))
   const all = settled.flatMap(result => {
     if (result.status === 'fulfilled') return result.value
     return []
   })
+  return deduplicateResults(all)
+}
+
+export async function fanOutSync(query: string, filters: SearchFilters): Promise<DedupedJobResult[]> {
+  const settled = await Promise.allSettled(SYNC_SCRAPERS.map(fn => fn(query, filters)))
+  const all = settled.flatMap(result =>
+    result.status === 'fulfilled' ? result.value : []
+  )
   return deduplicateResults(all)
 }
