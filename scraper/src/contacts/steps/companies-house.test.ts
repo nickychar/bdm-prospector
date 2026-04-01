@@ -6,8 +6,10 @@ vi.mock('undici', () => ({ fetch: vi.fn() }))
 import { findContactsViaCompaniesHouse } from './companies-house.js'
 import { fetch } from 'undici'
 
-function mockResponse(body: any, ok = true) {
-  return Promise.resolve({ ok, json: () => Promise.resolve(body) } as any)
+import type { Response as UndiciResponse } from 'undici'
+
+function mockResponse(body: unknown, ok = true) {
+  return { ok, json: () => Promise.resolve(body) } as unknown as UndiciResponse
 }
 
 describe('findContactsViaCompaniesHouse', () => {

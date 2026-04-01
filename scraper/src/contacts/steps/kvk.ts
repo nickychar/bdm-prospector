@@ -5,7 +5,9 @@
 import { fetch } from 'undici'
 import type { FoundContact } from '../types.js'
 
-const KVK_BASE = 'https://api.kvk.nl/api/v1'
+const KVK_BASE = process.env.KVK_TEST === 'true'
+  ? 'https://api.kvk.nl/test/api/v2'
+  : 'https://api.kvk.nl/api/v2'
 
 export async function findContactsViaKvK(
   companyName: string,
@@ -19,7 +21,7 @@ export async function findContactsViaKvK(
   }
   try {
     const res = await fetch(
-      `${KVK_BASE}/zoeken?handelsnaam=${encodeURIComponent(companyName)}&resultatenPerPagina=1`,
+      `${KVK_BASE}/zoeken?handelsnaam=${encodeURIComponent(companyName)}&resultatenPerPagina=5`,
       {
         headers: { apikey: apiKey },
         signal: AbortSignal.timeout(8_000),
