@@ -1,4 +1,5 @@
 import 'dotenv/config'
+import { createServer } from './server.js'
 import { db } from './db/client.js'
 import { startPoller } from './queue/poller.js'
 import { startTimeoutChecker } from './queue/timeout-checker.js'
@@ -97,6 +98,11 @@ async function main() {
   startTimeoutChecker()
   startPoller(handleScrapeJob)
   console.log('Polling for jobs every 2s...')
+
+  const port = parseInt(process.env.PORT ?? '3002', 10)
+  createServer().listen(port, () => {
+    console.log(`HTTP server listening on port ${port}`)
+  })
 }
 
 main().catch(err => {
