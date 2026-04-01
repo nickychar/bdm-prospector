@@ -45,6 +45,75 @@ export interface Database {
         }
         Relationships: []
       }
+      scan_runs: {
+        Row: {
+          id: string
+          user_id: string
+          query_count: number
+          result_count: number
+          error: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          query_count?: number
+          result_count?: number
+          error?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          query_count?: number
+          result_count?: number
+          error?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      job_signals: {
+        Row: {
+          id: string
+          user_id: string
+          company_id: string | null
+          scan_run_id: string | null
+          title: string | null
+          contract_type: string | null
+          board: string | null
+          posted_date: string | null
+          raw_snippet: string | null
+          boards_count: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          company_id?: string | null
+          scan_run_id?: string | null
+          title?: string | null
+          contract_type?: string | null
+          board?: string | null
+          posted_date?: string | null
+          raw_snippet?: string | null
+          boards_count?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          company_id?: string | null
+          scan_run_id?: string | null
+          title?: string | null
+          contract_type?: string | null
+          board?: string | null
+          posted_date?: string | null
+          raw_snippet?: string | null
+          boards_count?: number
+          created_at?: string
+        }
+        Relationships: []
+      }
       crm_connections: {
         Row: {
           id: string
