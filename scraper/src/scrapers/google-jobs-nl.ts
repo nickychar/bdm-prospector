@@ -66,7 +66,6 @@ export async function scrape(query: string, _filters: SearchFilters): Promise<Ra
       postedDate: parsePostedDate(job.detected_extensions?.posted_at),
       snippet: job.description?.slice(0, 300) ?? null,
       contractTypeRaw: job.detected_extensions?.schedule_type ?? null,
-      seniorityRaw: null,
     }))
   } catch {
     return []

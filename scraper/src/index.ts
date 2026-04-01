@@ -8,7 +8,7 @@ import { insertJobSignal } from './db/job-signals.js'
 import { upsertContact } from './db/contacts.js'
 import { runWaterfall } from './contacts/waterfall.js'
 import { upsertLead } from './scoring/upsert-lead.js'
-import { normaliseContractType, normaliseSeniority, isPermanent } from './normalise/nl-terms.js'
+import { normaliseContractType, isPermanent } from './normalise/nl-terms.js'
 import { normaliseDomain } from './normalise/domain.js'
 import type { ScrapeJob } from './types.js'
 
@@ -45,10 +45,6 @@ async function handleScrapeJob(job: ScrapeJob): Promise<number> {
       : null
     if (contractType && isPermanent(contractType)) continue
 
-    const seniority = result.seniorityRaw
-      ? normaliseSeniority(result.seniorityRaw)
-      : null
-
     const domain = result.companyDomain
       ? normaliseDomain(result.companyDomain)
       : normaliseDomain(result.companyName.toLowerCase().replace(/\s+/g, '') + '.com')
@@ -61,7 +57,6 @@ async function handleScrapeJob(job: ScrapeJob): Promise<number> {
     await insertJobSignal({
       companyId,
       title: result.jobTitle,
-      seniority,
       contractType: contractType as any,
       board: result.board,
       postedDate: result.postedDate,

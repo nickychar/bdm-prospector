@@ -18,7 +18,7 @@ export function parseResults(html: string): RawJobResult[] {
     const company = $('.companyName', el).text().trim()
     if (!title) return
     results.push({ companyName: company || 'Unknown', companyDomain: null, jobTitle: title,
-      board: 'indeed-nl', postedDate: null, snippet: null, contractTypeRaw: null, seniorityRaw: null })
+      board: 'indeed-nl', postedDate: null, snippet: null, contractTypeRaw: null })
   })
   return results
 }

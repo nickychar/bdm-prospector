@@ -1,10 +1,9 @@
 import { db } from './client.js'
-import type { ContractType, Seniority } from '../types.js'
+import type { ContractType } from '../types.js'
 
 interface JobSignalInput {
   companyId: string
   title: string | null
-  seniority?: Seniority | null
   contractType?: ContractType | null
   board: string
   postedDate?: string | null
@@ -17,7 +16,6 @@ export async function insertJobSignal(input: JobSignalInput): Promise<void> {
   const { error } = await db.from('job_signals').insert({
     company_id: input.companyId,
     title: input.title,
-    seniority: input.seniority ?? null,
     contract_type: input.contractType ?? null,
     board: input.board,
     posted_date: input.postedDate ?? null,

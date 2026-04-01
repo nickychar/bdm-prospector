@@ -17,7 +17,7 @@ export function parseResults(html: string): RawJobResult[] {
     const company = $('[class*="company"], [class*="employer"]', el).first().text().trim()
     if (!title) return
     results.push({ companyName: company || 'Unknown', companyDomain: null, jobTitle: title,
-      board: 'nationale-vacaturebank', postedDate: null, snippet: null, contractTypeRaw: null, seniorityRaw: null })
+      board: 'nationale-vacaturebank', postedDate: null, snippet: null, contractTypeRaw: null })
   })
   return results
 }

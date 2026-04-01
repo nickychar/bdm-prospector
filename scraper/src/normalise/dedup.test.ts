@@ -7,7 +7,7 @@ function makeResult(overrides: Partial<RawJobResult> = {}): RawJobResult {
     companyName: 'Acme Corp', companyDomain: 'acme.co.uk',
     jobTitle: 'Interim Finance Director', board: 'reed',
     postedDate: '2026-03-17', snippet: 'Looking for an interim FD',
-    contractTypeRaw: 'interim', seniorityRaw: 'director', ...overrides,
+    contractTypeRaw: 'interim', ...overrides,
   }
 }
 

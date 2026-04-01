@@ -37,7 +37,6 @@ export interface RawJobResult {
   postedDate: string | null
   snippet: string | null
   contractTypeRaw: string | null
-  seniorityRaw: string | null
 }
 
 export interface DedupedJobResult extends RawJobResult {
