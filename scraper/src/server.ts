@@ -1,6 +1,4 @@
-// scraper/src/server.ts
-// HTTP server for synchronous scan requests from the web app.
-// Runs alongside the queue poller in the same process.
+// HTTP server for scan requests from the web app.
 import express from 'express'
 import { fanOutSync } from './scrapers/index.js'
 import { deduplicateResults } from './normalise/dedup.js'
