@@ -150,10 +150,20 @@ export async function enrichAllCompanies(): Promise<{ count: number; error?: str
   } = await supabase.auth.getUser()
   if (!user) return { count: 0, error: 'Not authenticated' }
 
-  const { data: companies } = await supabase
+  const { data: enrichedIds } = await supabase
+    .from('contacts')
+    .select('company_id')
+    .eq('user_id', user.id)
+    .not('company_id', 'is', null)
+
+  const alreadyEnriched = new Set((enrichedIds ?? []).map((r) => r.company_id))
+
+  const { data: allCompanies } = await supabase
     .from('companies')
     .select('id')
     .eq('user_id', user.id)
+
+  const companies = (allCompanies ?? []).filter((c) => !alreadyEnriched.has(c.id))
 
   if (!companies?.length) return { count: 0 }
 

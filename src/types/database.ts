@@ -313,8 +313,8 @@ export interface Database {
           contact_id?: string | null
           company_id?: string | null
           job_post_id?: string | null
-          score: number
-          score_reasons: Json
+          score?: number
+          score_reasons?: Json
           priority_rank?: number | null
           status: 'new' | 'contacted' | 'replied' | 'qualified' | 'disqualified'
           is_duplicate?: boolean

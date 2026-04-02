@@ -4,24 +4,6 @@ import { Linkedin, Mail, Trophy } from 'lucide-react'
 import { GenerateLeadsButton, StatusSelect } from './hit-list-controls'
 import { GenerateDraftButton } from '../email-drafts/draft-controls'
 
-
-function ScoreBadge({ score }: { score: number }) {
-  const color =
-    score >= 70
-      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-      : score >= 40
-      ? 'bg-amber-50 text-amber-700 border-amber-200'
-      : 'bg-zinc-100 text-zinc-500 border-zinc-200'
-
-  return (
-    <span
-      className={`inline-flex items-center justify-center w-10 h-7 rounded-md border text-xs font-bold ${color}`}
-    >
-      {score}
-    </span>
-  )
-}
-
 export default async function HitListPage() {
   const supabase = await createClient()
   const {
@@ -32,21 +14,18 @@ export default async function HitListPage() {
   const { data } = await supabase
     .from('leads')
     .select(
-      `id, score, score_reasons, status, priority_rank,
+      `id, status,
        contacts(first_name, last_name, title, email, linkedin_url),
        companies(name)`
     )
     .eq('user_id', user.id)
     .eq('is_duplicate', false)
-    .order('priority_rank', { ascending: true, nullsFirst: false })
+    .order('created_at', { ascending: false })
     .limit(200)
 
   const leads = (data ?? []) as Array<{
     id: string
-    score: number
-    score_reasons: Array<{ reason: string; points: number }>
     status: string
-    priority_rank: number | null
     contacts: {
       first_name: string | null
       last_name: string | null
@@ -59,8 +38,8 @@ export default async function HitListPage() {
 
   const stats = {
     total: leads.length,
-    hot: leads.filter((l) => l.score >= 70).length,
     qualified: leads.filter((l) => l.status === 'qualified').length,
+    contacted: leads.filter((l) => l.status === 'contacted').length,
   }
 
   return (
@@ -70,7 +49,7 @@ export default async function HitListPage() {
         <div>
           <h2 className="text-xl font-semibold text-zinc-900">Hit List</h2>
           <p className="text-sm text-zinc-500 mt-0.5">
-            Scored and ranked prospects ready for outreach
+            Prospects ready for outreach
           </p>
         </div>
         <GenerateLeadsButton />
@@ -80,8 +59,8 @@ export default async function HitListPage() {
       <div className="grid grid-cols-3 gap-4">
         {[
           { label: 'Total Leads', value: stats.total, color: 'text-zinc-900' },
-          { label: 'Hot (70+)', value: stats.hot, color: 'text-emerald-600' },
-          { label: 'Qualified', value: stats.qualified, color: 'text-blue-600' },
+          { label: 'Contacted', value: stats.contacted, color: 'text-blue-600' },
+          { label: 'Qualified', value: stats.qualified, color: 'text-emerald-600' },
         ].map(({ label, value, color }) => (
           <div key={label} className="rounded-xl border border-zinc-200 bg-white p-4">
             <p className="text-sm text-zinc-500">{label}</p>
@@ -104,8 +83,6 @@ export default async function HitListPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-zinc-100 bg-zinc-50">
-                <th className="text-left px-4 py-3 font-medium text-zinc-500 w-12">#</th>
-                <th className="text-left px-4 py-3 font-medium text-zinc-500">Score</th>
                 <th className="text-left px-4 py-3 font-medium text-zinc-500">Contact</th>
                 <th className="text-left px-4 py-3 font-medium text-zinc-500">Company</th>
                 <th className="text-left px-4 py-3 font-medium text-zinc-500">Email</th>
@@ -114,7 +91,7 @@ export default async function HitListPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {leads.map((lead, i) => {
+              {leads.map((lead) => {
                 const contact = lead.contacts
                 const fullName = contact
                   ? [contact.first_name, contact.last_name].filter(Boolean).join(' ') || '—'
@@ -122,10 +99,6 @@ export default async function HitListPage() {
 
                 return (
                   <tr key={lead.id} className="hover:bg-zinc-50 transition-colors">
-                    <td className="px-4 py-3 text-zinc-400 text-xs">{i + 1}</td>
-                    <td className="px-4 py-3">
-                      <ScoreBadge score={lead.score} />
-                    </td>
                     <td className="px-4 py-3">
                       <p className="font-medium text-zinc-900">{fullName}</p>
                       <p className="text-xs text-zinc-400 mt-0.5">{contact?.title ?? '—'}</p>
@@ -173,5 +146,3 @@ export default async function HitListPage() {
     </div>
   )
 }
-
-// Silence unused import warning

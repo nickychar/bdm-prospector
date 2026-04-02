@@ -5,7 +5,7 @@ import { EnrichButton, EnrichAllButton } from './enrich-button'
 import type { CompanyRow } from '@/types/database'
 
 type CompanyWithCounts = CompanyRow & {
-  job_posts: { count: number }[]
+  job_signals: { count: number }[]
   contacts: { count: number }[]
 }
 
@@ -18,7 +18,7 @@ export default async function CompaniesPage() {
 
   const { data } = await supabase
     .from('companies')
-    .select('*, job_posts(count), contacts(count)')
+    .select('*, job_signals(count), contacts(count)')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
@@ -80,7 +80,7 @@ export default async function CompaniesPage() {
             </thead>
             <tbody className="divide-y divide-zinc-100">
               {companies.map((company) => {
-                const jobCount = company.job_posts[0]?.count ?? 0
+                const jobCount = company.job_signals[0]?.count ?? 0
                 const contactCount = company.contacts[0]?.count ?? 0
 
                 return (

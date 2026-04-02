@@ -11,6 +11,7 @@ const BOARD_COLORS: Record<string, string> = {
   'stepstone-nl': 'bg-yellow-50 text-yellow-700',
   jobbird: 'bg-pink-50 text-pink-700',
   flexmarkt: 'bg-teal-50 text-teal-700',
+  'google-jobs-nl': 'bg-red-50 text-red-700',
 }
 
 function BoardBadge({ board }: { board: string | null }) {
@@ -59,7 +60,7 @@ export default async function JobSignalsPage() {
         <div>
           <h2 className="text-xl font-semibold text-zinc-900">Job Signals</h2>
           <p className="text-sm text-zinc-500 mt-0.5">
-            Companies actively hiring — scanned across 7 NL job boards
+            Companies actively hiring — scanned across 8 NL job boards
           </p>
         </div>
         <div className="flex items-center gap-3">
