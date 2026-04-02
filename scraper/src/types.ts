@@ -1,12 +1,16 @@
+// These types mirror shared/db-enums.ts (the single source of truth).
+// We duplicate rather than import to avoid cross-project build complexity.
+// If you change an enum here, update shared/db-enums.ts too.
 export type SizeBand = 'small' | 'mid' | 'large'
 export type Country = 'uk' | 'nl'
 export type Seniority = 'director' | 'head' | 'manager' | 'other'
 export type ContractType = 'interim' | 'temp' | 'contract' | 'other'
 export type PersonaType = 'hiring_manager' | 'agency_selector'
 export type Confidence = 'high' | 'medium' | 'low'
-export type ContactSource = 'companies_house' | 'kvk' | 'website' | 'google' | 'press'
+export type ContactSource =
+  | 'salesforce' | 'apollo' | 'hunter' | 'manual'
+  | 'kvk' | 'companies_house' | 'google' | 'website' | 'press'
 export type PipelineStage = 'new' | 'contacted' | 'replied' | 'meeting_booked' | 'proposal_sent' | 'won' | 'dead'
-export type ScrapeJobStatus = 'queued' | 'running' | 'done' | 'failed'
 
 export interface SearchFilters {
   country?: 'uk' | 'nl' | 'both' | null
@@ -14,19 +18,6 @@ export interface SearchFilters {
   size_band?: SizeBand | null
   role_type?: 'interim' | 'temp' | 'contract' | null
   date_posted?: 'today' | 'week' | 'month' | null
-}
-
-export interface ScrapeJob {
-  id: string
-  query: string | null
-  filters: SearchFilters
-  status: ScrapeJobStatus
-  started_at: string | null
-  completed_at: string | null
-  updated_at: string
-  result_count: number
-  error: string | null
-  created_at: string
 }
 
 export interface RawJobResult {

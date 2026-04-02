@@ -1,3 +1,11 @@
+import type {
+  ContactSource,
+  CompanySource,
+  JobPostSource,
+  LeadStatus,
+  EmailDraftStatus,
+} from '@shared/db-enums'
+
 export type Json = string | number | boolean | null | { [key: string]: Json } | Json[]
 
 export interface Database {
@@ -158,7 +166,7 @@ export interface Database {
           location: string | null
           website: string | null
           salesforce_account_id: string | null
-          source: 'salesforce' | 'manual' | 'scraped'
+          source: CompanySource
           created_at: string
           updated_at: string
         }
@@ -172,7 +180,7 @@ export interface Database {
           location?: string | null
           website?: string | null
           salesforce_account_id?: string | null
-          source: 'salesforce' | 'manual' | 'scraped'
+          source: CompanySource
           created_at?: string
           updated_at?: string
         }
@@ -206,7 +214,7 @@ export interface Database {
           linkedin_url: string | null
           salesforce_contact_id: string | null
           apollo_id: string | null
-          source: 'salesforce' | 'apollo' | 'hunter' | 'manual'
+          source: ContactSource
           enriched_at: string | null
           created_at: string
           updated_at: string
@@ -224,7 +232,7 @@ export interface Database {
           linkedin_url?: string | null
           salesforce_contact_id?: string | null
           apollo_id?: string | null
-          source: 'salesforce' | 'apollo' | 'hunter' | 'manual'
+          source: ContactSource
           enriched_at?: string | null
           created_at?: string
           updated_at?: string
@@ -242,7 +250,7 @@ export interface Database {
           linkedin_url?: string | null
           salesforce_contact_id?: string | null
           apollo_id?: string | null
-          source?: 'salesforce' | 'apollo' | 'manual'
+          source?: ContactSource
           enriched_at?: string | null
           created_at?: string
           updated_at?: string
@@ -258,7 +266,7 @@ export interface Database {
           description: string | null
           url: string | null
           location: string | null
-          source: 'serpapi' | 'manual'
+          source: JobPostSource
           posted_date: string | null
           detected_at: string
           created_at: string
@@ -271,7 +279,7 @@ export interface Database {
           description?: string | null
           url?: string | null
           location?: string | null
-          source: 'serpapi' | 'manual'
+          source: JobPostSource
           posted_date?: string | null
           detected_at?: string
           created_at?: string
@@ -284,7 +292,7 @@ export interface Database {
           description?: string | null
           url?: string | null
           location?: string | null
-          source?: 'serpapi' | 'manual'
+          source?: JobPostSource
           posted_date?: string | null
           detected_at?: string
           created_at?: string
@@ -301,7 +309,7 @@ export interface Database {
           score: number
           score_reasons: Json
           priority_rank: number | null
-          status: 'new' | 'contacted' | 'replied' | 'qualified' | 'disqualified'
+          status: LeadStatus
           is_duplicate: boolean
           duplicate_of: string | null
           created_at: string
@@ -316,7 +324,7 @@ export interface Database {
           score?: number
           score_reasons?: Json
           priority_rank?: number | null
-          status: 'new' | 'contacted' | 'replied' | 'qualified' | 'disqualified'
+          status: LeadStatus
           is_duplicate?: boolean
           duplicate_of?: string | null
           created_at?: string
@@ -331,7 +339,7 @@ export interface Database {
           score?: number
           score_reasons?: Json
           priority_rank?: number | null
-          status?: 'new' | 'contacted' | 'replied' | 'qualified' | 'disqualified'
+          status?: LeadStatus
           is_duplicate?: boolean
           duplicate_of?: string | null
           created_at?: string
@@ -347,7 +355,7 @@ export interface Database {
           subject: string
           body: string
           template_used: string | null
-          status: 'draft' | 'sent' | 'opened' | 'replied' | 'bounced'
+          status: EmailDraftStatus
           sent_at: string | null
           opened_at: string | null
           replied_at: string | null
@@ -364,7 +372,7 @@ export interface Database {
           subject: string
           body: string
           template_used?: string | null
-          status?: 'draft' | 'sent' | 'opened' | 'replied' | 'bounced'
+          status?: EmailDraftStatus
           sent_at?: string | null
           opened_at?: string | null
           replied_at?: string | null
@@ -381,7 +389,7 @@ export interface Database {
           subject?: string
           body?: string
           template_used?: string | null
-          status?: 'draft' | 'sent' | 'opened' | 'replied' | 'bounced'
+          status?: EmailDraftStatus
           sent_at?: string | null
           opened_at?: string | null
           replied_at?: string | null
