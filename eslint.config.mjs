@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Scraper has its own project config:
+    "scraper/**",
+    // Shared types (no lint rules needed):
+    "shared/**",
   ]),
 ]);
 
