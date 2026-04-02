@@ -14,6 +14,12 @@ export function createServer() {
     res.json({ ok: true })
   })
 
+  // Temporary debug endpoint — remove after confirming key is correct
+  app.get('/debug-key', (_req, res) => {
+    const key = process.env.SCRAPER_KEY
+    res.json({ keySet: !!key, keyLength: key?.length ?? 0, keyPreview: key ? key.slice(0, 4) + '...' : null })
+  })
+
   app.post('/scan', async (req, res) => {
     const key = req.headers['x-scraper-key']
     if (key !== process.env.SCRAPER_KEY) {
