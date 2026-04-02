@@ -23,7 +23,15 @@ export function createServer() {
   app.post('/scan', async (req, res) => {
     const key = req.headers['x-scraper-key']
     if (key !== process.env.SCRAPER_KEY) {
-      res.status(401).json({ error: 'Unauthorized' })
+      res.status(401).json({
+        error: 'Unauthorized',
+        debug: {
+          receivedLength: typeof key === 'string' ? key.length : 0,
+          receivedPreview: typeof key === 'string' ? key.slice(0, 4) + '...' : null,
+          expectedLength: process.env.SCRAPER_KEY?.length ?? 0,
+          expectedPreview: process.env.SCRAPER_KEY ? process.env.SCRAPER_KEY.slice(0, 4) + '...' : null,
+        }
+      })
       return
     }
 
